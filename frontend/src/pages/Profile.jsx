@@ -1,50 +1,40 @@
 import { useState, useEffect } from "react";
 
 function Profile() {
-  const [showPasswordFields, setShowPasswordFields] =
-    useState(false);
-
+  const [showPasswordFields, setShowPasswordFields] = useState(false);
   const [user, setUser] = useState({});
-
   const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] =
-    useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [fullname, setFullname] = useState("");
+  const [editProfile, setEditProfile] = useState(false);
+  const API_URL = import.meta.env.VITE_API_URL || "";
 
-  const [showNewPassword, setShowNewPassword] =
-    useState(false);
-
-  const [
-    showConfirmPassword,
-    setShowConfirmPassword,
-  ] = useState(false);
- const [fullname, setFullname] = useState("");
-const [editProfile, setEditProfile] = useState(false);
-   const API_URL = import.meta.env.VITE_API_URL;
   useEffect(() => {
     const fetchProfile = async () => {
+      if (!API_URL) {
+        return;
+      }
+
       try {
         const token = localStorage.getItem("token");
-
-
-const response = await fetch(
-  `${API_URL}/api/profile`,
-  {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  }
-);
+        const response = await fetch(`${API_URL}/api/profile`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         const data = await response.json();
-setUser(data);
-setFullname(data.fullname || "");
+        setUser(data);
+        setFullname(data.fullname || "");
       } catch (error) {
         console.log(error);
       }
     };
 
     fetchProfile();
-  }, []);
+  }, [API_URL]);
 
   const handleChangePassword = async () => {
     if (!newPassword || !confirmPassword) {
@@ -60,19 +50,16 @@ setFullname(data.fullname || "");
     try {
       const token = localStorage.getItem("token");
 
-      const response = await fetch(
-        `${API_URL}/api/change-password`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            newPassword,
-          }),
-        }
-      );
+      const response = await fetch(`${API_URL}/api/change-password`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          newPassword,
+        }),
+      });
 
       const data = await response.json();
 
@@ -91,47 +78,40 @@ setFullname(data.fullname || "");
     }
   };
   const handleUpdateProfile = async () => {
-  try {
-    const token = localStorage.getItem("token");
+    try {
+      const token = localStorage.getItem("token");
 
-   const response = await fetch(
-  `${API_URL}/api/update-profile`,
-  {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      fullname,
-    }),
-  }
-);
+      const response = await fetch(`${API_URL}/api/update-profile`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          fullname,
+        }),
+      });
 
-    const data = await response.json();
-if (response.ok) {
-  const updatedUser = {
-    ...user,
-    fullname,
-  };
+      const data = await response.json();
+      if (response.ok) {
+        const updatedUser = {
+          ...user,
+          fullname,
+        };
 
-  setUser(updatedUser);
+        setUser(updatedUser);
 
-  localStorage.setItem(
-    "user",
-    JSON.stringify(updatedUser)
-  );
+        localStorage.setItem("user", JSON.stringify(updatedUser));
 
-  setEditProfile(false);
-  alert(data.message);
-}else {
-      alert(data.message);
+        setEditProfile(false);
+        alert(data.message);
+      } else {
+        alert(data.message);
+      }
+    } catch (error) {
+      console.log(error);
     }
-  } catch (error) {
-    console.log(error);
-  }
-};
-  
+  };
 
   return (
     <div className="container-fluid p-4">
@@ -148,30 +128,24 @@ if (response.ok) {
                   height="100"
                 />
 
-                <h3 className="mt-2 text-success fw-bold">
-                  My Profile
-                </h3>
+                <h3 className="mt-2 text-success fw-bold">My Profile</h3>
               </div>
 
               <div className="row">
                 <div className="col-md-6 mb-3">
-                  <label className="form-label fw-semibold">
-                    Name
-                  </label>
+                  <label className="form-label fw-semibold">Name</label>
 
-                <input
-  type="text"
-  className="form-control"
-  value={fullname}
-  readOnly={!editProfile}
-  onChange={(e) => setFullname(e.target.value)}
-/>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={fullname}
+                    readOnly={!editProfile}
+                    onChange={(e) => setFullname(e.target.value)}
+                  />
                 </div>
 
                 <div className="col-md-6 mb-3">
-                  <label className="form-label fw-semibold">
-                    Email
-                  </label>
+                  <label className="form-label fw-semibold">Email</label>
 
                   <input
                     type="email"
@@ -182,9 +156,7 @@ if (response.ok) {
                 </div>
 
                 <div className="col-md-6 mb-3">
-                  <label className="form-label fw-semibold">
-                    User ID
-                  </label>
+                  <label className="form-label fw-semibold">User ID</label>
 
                   <input
                     type="text"
@@ -195,18 +167,14 @@ if (response.ok) {
                 </div>
 
                 <div className="col-md-6 mb-3">
-                  <label className="form-label fw-semibold">
-                    Joined On
-                  </label>
+                  <label className="form-label fw-semibold">Joined On</label>
 
                   <input
                     type="text"
                     className="form-control"
                     value={
                       user.createdAt
-                        ? new Date(
-                            user.createdAt
-                          ).toLocaleDateString()
+                        ? new Date(user.createdAt).toLocaleDateString()
                         : ""
                     }
                     readOnly
@@ -218,9 +186,7 @@ if (response.ok) {
                 <>
                   <hr />
 
-                  <h5 className="text-primary mb-3">
-                    Change Password
-                  </h5>
+                  <h5 className="text-primary mb-3">Change Password</h5>
 
                   <div className="row">
                     <div className="col-md-6 mb-3">
@@ -230,33 +196,19 @@ if (response.ok) {
 
                       <div className="input-group">
                         <input
-                          type={
-                            showNewPassword
-                              ? "text"
-                              : "password"
-                          }
+                          type={showNewPassword ? "text" : "password"}
                           className="form-control"
                           placeholder="Enter New Password"
                           value={newPassword}
-                          onChange={(e) =>
-                            setNewPassword(
-                              e.target.value
-                            )
-                          }
+                          onChange={(e) => setNewPassword(e.target.value)}
                         />
 
                         <button
                           type="button"
                           className="btn btn-outline-secondary"
-                          onClick={() =>
-                            setShowNewPassword(
-                              !showNewPassword
-                            )
-                          }
+                          onClick={() => setShowNewPassword(!showNewPassword)}
                         >
-                          {showNewPassword
-                            ? "Hide"
-                            : "Show"}
+                          {showNewPassword ? "Hide" : "Show"}
                         </button>
                       </div>
                     </div>
@@ -268,33 +220,21 @@ if (response.ok) {
 
                       <div className="input-group">
                         <input
-                          type={
-                            showConfirmPassword
-                              ? "text"
-                              : "password"
-                          }
+                          type={showConfirmPassword ? "text" : "password"}
                           className="form-control"
                           placeholder="Confirm New Password"
                           value={confirmPassword}
-                          onChange={(e) =>
-                            setConfirmPassword(
-                              e.target.value
-                            )
-                          }
+                          onChange={(e) => setConfirmPassword(e.target.value)}
                         />
 
                         <button
                           type="button"
                           className="btn btn-outline-secondary"
                           onClick={() =>
-                            setShowConfirmPassword(
-                              !showConfirmPassword
-                            )
+                            setShowConfirmPassword(!showConfirmPassword)
                           }
                         >
-                          {showConfirmPassword
-                            ? "Hide"
-                            : "Show"}
+                          {showConfirmPassword ? "Hide" : "Show"}
                         </button>
                       </div>
                     </div>
@@ -302,56 +242,50 @@ if (response.ok) {
                 </>
               )}
 
-             <div className="d-flex justify-content-center gap-3 mt-3">
+              <div className="d-flex justify-content-center gap-3 mt-3">
+                <button
+                  type="button"
+                  className={`btn ${
+                    editProfile ? "btn-success" : "btn-warning"
+                  }`}
+                  onClick={() => {
+                    if (editProfile) {
+                      handleUpdateProfile();
+                    } else {
+                      setEditProfile(true);
+                    }
+                  }}
+                >
+                  {editProfile ? "Save Profile" : "Edit Profile"}
+                </button>
 
-  <button
-    type="button"
-    className={`btn ${
-      editProfile ? "btn-success" : "btn-warning"
-    }`}
-    onClick={() => {
-      if (editProfile) {
-        handleUpdateProfile();
-      } else {
-        setEditProfile(true);
-      }
-    }}
-  >
-    {editProfile ? "Save Profile" : "Edit Profile"}
-  </button>
+                {showPasswordFields && (
+                  <button
+                    type="button"
+                    className="btn btn-success px-4"
+                    onClick={handleChangePassword}
+                  >
+                    Update Password
+                  </button>
+                )}
 
-  {showPasswordFields && (
-    <button
-      type="button"
-      className="btn btn-success px-4"
-      onClick={handleChangePassword}
-    >
-      Update Password
-    </button>
-  )}
+                <button
+                  type="button"
+                  className={`btn ${
+                    showPasswordFields ? "btn-secondary" : "btn-primary"
+                  }`}
+                  onClick={() => {
+                    setShowPasswordFields(!showPasswordFields);
 
-  <button
-    type="button"
-    className={`btn ${
-      showPasswordFields
-        ? "btn-secondary"
-        : "btn-primary"
-    }`}
-    onClick={() => {
-      setShowPasswordFields(!showPasswordFields);
-
-      if (showPasswordFields) {
-        setNewPassword("");
-        setConfirmPassword("");
-      }
-    }}
-  >
-    {showPasswordFields
-      ? "Cancel"
-      : "Change Password"}
-  </button>
-
-</div>
+                    if (showPasswordFields) {
+                      setNewPassword("");
+                      setConfirmPassword("");
+                    }
+                  }}
+                >
+                  {showPasswordFields ? "Cancel" : "Change Password"}
+                </button>
+              </div>
             </div>
           </div>
         </div>

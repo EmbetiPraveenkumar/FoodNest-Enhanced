@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import bg from "./img5.png";
 
 export default function Register({ switchPage }) {
@@ -53,26 +53,25 @@ export default function Register({ switchPage }) {
           boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
         }}
       >
-      <h1
-  style={{
-    textAlign: "center",
-    color: "#2287e5e5",
-    marginBottom: "5px",
-  }}
->
-  NeuroFleetX
-</h1>
+        <h1
+          style={{
+            textAlign: "center",
+            color: "#2287e5e5",
+            marginBottom: "5px",
+          }}
+        >
+          NeuroFleetX
+        </h1>
 
-<h2
-  style={{
-    textAlign: "center",
-    marginTop: "0px",
-    marginBottom: "15px",
-  }}
->
-  Register Here
-</h2>
-
+        <h2
+          style={{
+            textAlign: "center",
+            marginTop: "0px",
+            marginBottom: "15px",
+          }}
+        >
+          Register Here
+        </h2>
 
         <label>Role</label>
         <select

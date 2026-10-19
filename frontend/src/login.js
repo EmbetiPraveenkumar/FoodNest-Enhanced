@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import bg from "./img5.png";
 
 export default function Login({ switchPage }) {
@@ -28,7 +28,7 @@ export default function Login({ switchPage }) {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-         backgroundImage: `url(${bg})`,
+        backgroundImage: `url(${bg})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backdropFilter: "blur(2px)",
@@ -46,9 +46,8 @@ export default function Login({ switchPage }) {
           backdropFilter: "blur(10px)",
         }}
       >
-        <h1 style={{ textAlign: "center",color:"#2287e5ff" }}>NeuroFleetX</h1>
+        <h1 style={{ textAlign: "center", color: "#2287e5ff" }}>NeuroFleetX</h1>
         <h2 style={{ textAlign: "center", marginBottom: "20px" }}>Login</h2>
-       
 
         <label>Email</label>
         <input

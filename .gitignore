@@ -4,10 +4,14 @@ node_modules/
 
 # Environment files
 .env
+.env.*
+!.env.example
+!**/.env.example
+!backend/.env.example
+!frontend/.env.example
 backend/.env
 frontend/.env
 .env.local
-.env.*
 
 # Build folders
 dist/
@@ -23,3 +27,5 @@ build/
 # OS files
 .DS_Store
 Thumbs.db
+# Local dependency audit reports
+backend/audit.json
