@@ -9,15 +9,11 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
-  const API_URL = import.meta.env.VITE_API_URL;
+
+  const API_URL = import.meta.env.VITE_API_URL || "";
 
   const handleLogin = async (e) => {
     e.preventDefault();
-
-    if (!API_URL) {
-      alert("API configuration is missing. Please contact the administrator.");
-      return;
-    }
 
     try {
       const response = await axios.post(`${API_URL}/api/login`, {
@@ -60,13 +56,11 @@ function Login() {
           <div className="col-lg-6 col-12">
             <div className="p-4 p-md-5">
               <h2 className="fw-bold mb-2">Welcome Back</h2>
-
               <p className="text-muted mb-4">Login to continue</p>
 
               <form onSubmit={handleLogin}>
                 <div className="mb-3">
                   <label className="form-label">Email</label>
-
                   <input
                     type="email"
                     className="form-control"
@@ -107,7 +101,6 @@ function Login() {
                       type="checkbox"
                       id="remember"
                     />
-
                     <label className="form-check-label" htmlFor="remember">
                       Remember me
                     </label>

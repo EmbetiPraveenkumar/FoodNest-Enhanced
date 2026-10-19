@@ -9,16 +9,19 @@ function Profile() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [fullname, setFullname] = useState("");
   const [editProfile, setEditProfile] = useState(false);
+
   const API_URL = import.meta.env.VITE_API_URL || "";
 
   useEffect(() => {
     const fetchProfile = async () => {
-      if (!API_URL) {
-        return;
-      }
-
       try {
         const token = localStorage.getItem("token");
+
+        if (!token) {
+          alert("Please log in to view your profile.");
+          return;
+        }
+
         const response = await fetch(`${API_URL}/api/profile`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -26,15 +29,20 @@ function Profile() {
         });
 
         const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to load profile");
+        }
+
         setUser(data);
         setFullname(data.fullname || "");
       } catch (error) {
-        console.log(error);
+        console.error("Failed to fetch profile:", error);
       }
     };
 
-    fetchProfile();
-  }, [API_URL]);
+    void fetchProfile();
+  }, []);
 
   const handleChangePassword = async () => {
     if (!newPassword || !confirmPassword) {
@@ -50,36 +58,48 @@ function Profile() {
     try {
       const token = localStorage.getItem("token");
 
+      if (!token) {
+        alert("Please log in again.");
+        return;
+      }
+
       const response = await fetch(`${API_URL}/api/change-password`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          newPassword,
-        }),
+        body: JSON.stringify({ newPassword }),
       });
 
       const data = await response.json();
 
-      if (response.ok) {
-        alert(data.message);
-
-        setNewPassword("");
-        setConfirmPassword("");
-        setShowPasswordFields(false);
-      } else {
-        alert(data.message);
+      if (!response.ok) {
+        alert(data.message || "Failed to update password");
+        return;
       }
+
+      alert(data.message || "Password updated successfully");
+
+      setNewPassword("");
+      setConfirmPassword("");
+      setShowPasswordFields(false);
+      setShowNewPassword(false);
+      setShowConfirmPassword(false);
     } catch (error) {
-      console.log(error);
+      console.error("Failed to update password:", error);
       alert("Failed to update password");
     }
   };
+
   const handleUpdateProfile = async () => {
     try {
       const token = localStorage.getItem("token");
+
+      if (!token) {
+        alert("Please log in again.");
+        return;
+      }
 
       const response = await fetch(`${API_URL}/api/update-profile`, {
         method: "PUT",
@@ -87,29 +107,29 @@ function Profile() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          fullname,
-        }),
+        body: JSON.stringify({ fullname }),
       });
 
       const data = await response.json();
-      if (response.ok) {
-        const updatedUser = {
-          ...user,
-          fullname,
-        };
 
-        setUser(updatedUser);
-
-        localStorage.setItem("user", JSON.stringify(updatedUser));
-
-        setEditProfile(false);
-        alert(data.message);
-      } else {
-        alert(data.message);
+      if (!response.ok) {
+        alert(data.message || "Failed to update profile");
+        return;
       }
+
+      const updatedUser = {
+        ...user,
+        fullname,
+      };
+
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      setEditProfile(false);
+
+      alert(data.message || "Profile updated successfully");
     } catch (error) {
-      console.log(error);
+      console.error("Failed to update profile:", error);
+      alert("Failed to update profile");
     }
   };
 
@@ -134,7 +154,6 @@ function Profile() {
               <div className="row">
                 <div className="col-md-6 mb-3">
                   <label className="form-label fw-semibold">Name</label>
-
                   <input
                     type="text"
                     className="form-control"
@@ -146,7 +165,6 @@ function Profile() {
 
                 <div className="col-md-6 mb-3">
                   <label className="form-label fw-semibold">Email</label>
-
                   <input
                     type="email"
                     className="form-control"
@@ -157,7 +175,6 @@ function Profile() {
 
                 <div className="col-md-6 mb-3">
                   <label className="form-label fw-semibold">User ID</label>
-
                   <input
                     type="text"
                     className="form-control"
@@ -168,7 +185,6 @@ function Profile() {
 
                 <div className="col-md-6 mb-3">
                   <label className="form-label fw-semibold">Joined On</label>
-
                   <input
                     type="text"
                     className="form-control"
@@ -185,7 +201,6 @@ function Profile() {
               {showPasswordFields && (
                 <>
                   <hr />
-
                   <h5 className="text-primary mb-3">Change Password</h5>
 
                   <div className="row">
@@ -242,7 +257,7 @@ function Profile() {
                 </>
               )}
 
-              <div className="d-flex justify-content-center gap-3 mt-3">
+              <div className="d-flex justify-content-center gap-3 mt-3 flex-wrap">
                 <button
                   type="button"
                   className={`btn ${
@@ -250,7 +265,7 @@ function Profile() {
                   }`}
                   onClick={() => {
                     if (editProfile) {
-                      handleUpdateProfile();
+                      void handleUpdateProfile();
                     } else {
                       setEditProfile(true);
                     }
@@ -263,7 +278,7 @@ function Profile() {
                   <button
                     type="button"
                     className="btn btn-success px-4"
-                    onClick={handleChangePassword}
+                    onClick={() => void handleChangePassword()}
                   >
                     Update Password
                   </button>
@@ -280,6 +295,8 @@ function Profile() {
                     if (showPasswordFields) {
                       setNewPassword("");
                       setConfirmPassword("");
+                      setShowNewPassword(false);
+                      setShowConfirmPassword(false);
                     }
                   }}
                 >

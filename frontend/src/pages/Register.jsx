@@ -9,11 +9,11 @@ function Register() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [agree, setAgree] = useState(false);
-  const API_URL = import.meta.env.VITE_API_URL;
 
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] =
-    useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const API_URL = import.meta.env.VITE_API_URL || "";
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -29,15 +29,12 @@ function Register() {
     }
 
     try {
-      const response = await axios.post(
-  `${API_URL}/api/register`,
-        {
-          fullname,
-          email,
-          password,
-          confirmPassword,
-        }
-      );
+      const response = await axios.post(`${API_URL}/api/register`, {
+        fullname,
+        email,
+        password,
+        confirmPassword,
+      });
 
       alert(response.data.message);
 
@@ -47,10 +44,7 @@ function Register() {
       setConfirmPassword("");
       setAgree(false);
     } catch (error) {
-      alert(
-        error.response?.data?.message ||
-          "Registration failed"
-      );
+      alert(error.response?.data?.message || "Registration failed");
     }
   };
 
@@ -67,9 +61,10 @@ function Register() {
         style={{ maxWidth: "1000px" }}
       >
         <div className="row g-0 flex-lg-row-reverse">
-          
           <div className="col-lg-6 d-none d-lg-flex align-items-center justify-content-center bg-light">
-            <img src={registerImg} alt="Register"
+            <img
+              src={registerImg}
+              alt="Register"
               className="img-fluid p-4"
               style={{ maxHeight: "450px" }}
             />
@@ -77,106 +72,70 @@ function Register() {
 
           <div className="col-lg-6 col-12">
             <div className="p-4 p-md-5">
-              <h2 className="fw-bold mb-2">
-                Create Account
-              </h2>
+              <h2 className="fw-bold mb-2">Create Account</h2>
 
-              <p className="text-muted mb-4">
-                Create your account to continue
-              </p>
+              <p className="text-muted mb-4">Create your account to continue</p>
 
               <form onSubmit={handleRegister}>
                 <div className="mb-3">
-                  <label className="form-label">
-                    Full Name
-                  </label>
+                  <label className="form-label">Full Name</label>
 
                   <input
                     type="text"
                     className="form-control"
                     placeholder="Enter your name"
                     value={fullname}
-                    onChange={(e) =>
-                      setFullname(e.target.value)
-                    }
+                    onChange={(e) => setFullname(e.target.value)}
                     required
                   />
                 </div>
 
                 <div className="mb-3">
-                  <label className="form-label">
-                    Email
-                  </label>
+                  <label className="form-label">Email</label>
 
                   <input
                     type="email"
                     className="form-control"
                     placeholder="Enter your email"
                     value={email}
-                    onChange={(e) =>
-                      setEmail(e.target.value)
-                    }
+                    onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                 </div>
 
                 <div className="mb-3">
-                  <label className="form-label">
-                    Password
-                  </label>
+                  <label className="form-label">Password</label>
 
                   <div className="input-group">
                     <input
-                      type={
-                        showPassword
-                          ? "text"
-                          : "password"
-                      }
+                      type={showPassword ? "text" : "password"}
                       className="form-control"
                       placeholder="Enter password"
                       value={password}
-                      onChange={(e) =>
-                        setPassword(e.target.value)
-                      }
+                      onChange={(e) => setPassword(e.target.value)}
                       required
                     />
 
                     <button
                       type="button"
                       className="btn btn-outline-secondary"
-                      onClick={() =>
-                        setShowPassword(
-                          !showPassword
-                        )
-                      }
+                      onClick={() => setShowPassword(!showPassword)}
                     >
-                      {showPassword
-                        ? "Hide"
-                        : "Show"}
+                      {showPassword ? "Hide" : "Show"}
                     </button>
                   </div>
                 </div>
 
                 <div className="mb-3">
-                  <label className="form-label">
-                    Confirm Password
-                  </label>
+                  <label className="form-label">Confirm Password</label>
 
                   <div className="input-group">
                     <input
-                      type={
-                        showConfirmPassword
-                          ? "text"
-                          : "password"
-                      }
+                      type={showConfirmPassword ? "text" : "password"}
                       className="form-control"
                       placeholder="Confirm password"
                       value={confirmPassword}
-                      onChange={(e) =>
-                        setConfirmPassword(
-                          e.target.value
-                        )
-                      }
+                      onChange={(e) => setConfirmPassword(e.target.value)}
                       required
                     />
 
@@ -184,14 +143,10 @@ function Register() {
                       type="button"
                       className="btn btn-outline-secondary"
                       onClick={() =>
-                        setShowConfirmPassword(
-                          !showConfirmPassword
-                        )
+                        setShowConfirmPassword(!showConfirmPassword)
                       }
                     >
-                      {showConfirmPassword
-                        ? "Hide"
-                        : "Show"}
+                      {showConfirmPassword ? "Hide" : "Show"}
                     </button>
                   </div>
                 </div>
@@ -202,15 +157,10 @@ function Register() {
                     type="checkbox"
                     id="terms"
                     checked={agree}
-                    onChange={(e) =>
-                      setAgree(e.target.checked)
-                    }
+                    onChange={(e) => setAgree(e.target.checked)}
                   />
 
-                  <label
-                    className="form-check-label"
-                    htmlFor="terms"
-                  >
+                  <label className="form-check-label" htmlFor="terms">
                     I agree to the{" "}
                     <span className="text-primary fw-semibold">
                       Terms & Conditions
@@ -232,17 +182,13 @@ function Register() {
 
                 <p className="text-center mt-4 mb-0">
                   Already have an account?{" "}
-                  <Link
-                    to="/login"
-                    className="text-decoration-none"
-                  >
+                  <Link to="/login" className="text-decoration-none">
                     Login
                   </Link>
                 </p>
               </form>
             </div>
           </div>
-
         </div>
       </div>
     </div>

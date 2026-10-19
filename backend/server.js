@@ -1,3 +1,4 @@
+const path = require("path");
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -16,7 +17,9 @@ const allowedOrigins = [
   "http://127.0.0.1:5173",
   "http://localhost:5174",
   "http://127.0.0.1:5174",
-];
+  process.env.FRONTEND_ORIGIN,
+  process.env.RENDER_EXTERNAL_URL,
+].filter(Boolean);
 
 app.use(
   cors({
@@ -165,9 +168,9 @@ const connectDB = async () => {
   console.log("MongoDB Connected Successfully");
 };
 
-app.get("/", (req, res) => {
-  res.send("Backend server is running");
-});
+// app.get("/", (req, res) => {
+//   res.send("Backend server is running");
+// });
 
 app.get("/health", (req, res) => {
   res.status(200).json({
@@ -474,6 +477,27 @@ app.put("/api/update-profile", authMiddleware, async (req, res) => {
   }
 });
 
+// Serve the built React frontend from frontend/dist.
+const frontendDistPath = path.join(__dirname, "..", "frontend", "dist");
+
+app.use(express.static(frontendDistPath));
+
+// React single-page application fallback.
+app.use((req, res, next) => {
+  const isApiRequest = req.path === "/api" || req.path.startsWith("/api/");
+
+  if (req.method !== "GET" || isApiRequest) {
+    return next();
+  }
+
+  return res.sendFile(path.join(frontendDistPath, "index.html"), (error) => {
+    if (error) {
+      return next(error);
+    }
+  });
+});
+
+// Return JSON 404 for unmatched routes.
 app.use((req, res) => {
   res.status(404).json({
     message: "Route not found",

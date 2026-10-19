@@ -7,6 +7,7 @@ function Courses() {
   const [editingId, setEditingId] = useState(null);
   const [sortField, setSortField] = useState("");
   const [sortOrder, setSortOrder] = useState("asc");
+
   const [formData, setFormData] = useState({
     name: "",
     category: "",
@@ -14,9 +15,8 @@ function Courses() {
     expiryDate: "",
   });
 
-  const API_URL = import.meta.env.VITE_API_URL
-    ? `${import.meta.env.VITE_API_URL}/api/items`
-    : "";
+  const API_BASE_URL = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
+  const API_URL = `${API_BASE_URL}/api/items`;
 
   const getAuthHeaders = useCallback(() => {
     const token = localStorage.getItem("token");
@@ -24,11 +24,6 @@ function Courses() {
   }, []);
 
   const fetchFoods = useCallback(async () => {
-    if (!API_URL) {
-      setFoods([]);
-      return;
-    }
-
     try {
       const res = await axios.get(API_URL, {
         headers: getAuthHeaders(),
@@ -44,10 +39,13 @@ function Courses() {
         setFoods([]);
       }
     } catch (error) {
-      console.log(error);
+      console.error(
+        "Failed to fetch inventory:",
+        error.response?.data?.message || error.message,
+      );
       setFoods([]);
     }
-  }, [API_URL, getAuthHeaders]);
+  }, [getAuthHeaders]);
 
   useEffect(() => {
     void fetchFoods();
@@ -55,10 +53,21 @@ function Courses() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
     setFormData((current) => ({
       ...current,
       [name]: value,
     }));
+  };
+
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      category: "",
+      quantity: "",
+      expiryDate: "",
+    });
+    setEditingId(null);
   };
 
   const addFood = async (e) => {
@@ -69,35 +78,52 @@ function Courses() {
         await axios.put(`${API_URL}/${editingId}`, formData, {
           headers: getAuthHeaders(),
         });
-
-        setEditingId(null);
       } else {
         await axios.post(API_URL, formData, {
           headers: getAuthHeaders(),
         });
       }
 
-      setFormData({
-        name: "",
-        category: "",
-        quantity: "",
-        expiryDate: "",
-      });
-
-      fetchFoods();
+      resetForm();
+      await fetchFoods();
     } catch (error) {
-      console.log(error);
+      console.error(
+        "Failed to save food item:",
+        error.response?.data?.message || error.message,
+      );
+
+      window.alert(
+        error.response?.data?.message || "Failed to save food item.",
+      );
     }
   };
 
   const deleteFood = async (id) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this food item?",
+    );
+
+    if (!confirmed) return;
+
     try {
       await axios.delete(`${API_URL}/${id}`, {
         headers: getAuthHeaders(),
       });
-      fetchFoods();
+
+      if (editingId === id) {
+        resetForm();
+      }
+
+      await fetchFoods();
     } catch (error) {
-      console.log(error);
+      console.error(
+        "Failed to delete food item:",
+        error.response?.data?.message || error.message,
+      );
+
+      window.alert(
+        error.response?.data?.message || "Failed to delete food item.",
+      );
     }
   };
 
@@ -112,16 +138,18 @@ function Courses() {
         : "";
 
     setFormData({
-      name: food.name,
-      category: food.category,
-      quantity: food.quantity,
+      name: food.name || "",
+      category: food.category || "",
+      quantity: food.quantity ?? "",
       expiryDate: safeExpiryDate,
     });
   };
 
   const getStatus = (qty) => {
-    if (qty === 0) return "Out of Stock";
-    if (qty <= 10) return "Low Stock";
+    const quantity = Number(qty);
+
+    if (quantity === 0) return "Out of Stock";
+    if (quantity <= 10) return "Low Stock";
     return "In Stock";
   };
 
@@ -167,15 +195,16 @@ function Courses() {
     ]);
 
     const csvContent = [headers, ...rows]
-      .map((row) => row.map((value) => escapeCsvValue(value)).join(","))
+      .map((row) => row.map(escapeCsvValue).join(","))
       .join("\n");
 
-    const blob = new Blob([csvContent], {
+    const blob = new Blob(["\uFEFF", csvContent], {
       type: "text/csv;charset=utf-8;",
     });
 
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
+
     link.href = url;
     link.download = "inventory.csv";
     document.body.appendChild(link);
@@ -191,9 +220,13 @@ function Courses() {
   };
 
   const getExpiryStatus = (expiryDate) => {
-    const today = new Date();
+    if (!expiryDate) return "Fresh";
+
     const expiry = new Date(expiryDate);
 
+    if (Number.isNaN(expiry.getTime())) return "Fresh";
+
+    const today = new Date();
     today.setHours(0, 0, 0, 0);
     expiry.setHours(0, 0, 0, 0);
 
@@ -201,19 +234,25 @@ function Courses() {
 
     if (diffDays < 0) return "Expired";
     if (diffDays <= 7) return "Expiring Soon";
+
     return "Fresh";
   };
+
   const filteredFoods = foodList
-    .filter(
-      (food) =>
-        food.name.toLowerCase().includes(search.toLowerCase()) ||
-        food.category.toLowerCase().includes(search.toLowerCase()),
-    )
+    .filter((food) => {
+      const name = String(food.name || "").toLowerCase();
+      const category = String(food.category || "").toLowerCase();
+      const query = search.toLowerCase();
+
+      return name.includes(query) || category.includes(query);
+    })
     .sort((a, b) => {
       if (sortField === "name") {
-        return sortOrder === "asc"
-          ? a.name.localeCompare(b.name)
-          : b.name.localeCompare(a.name);
+        const comparison = String(a.name || "").localeCompare(
+          String(b.name || ""),
+        );
+
+        return sortOrder === "asc" ? comparison : -comparison;
       }
 
       if (sortField === "status") {
@@ -223,15 +262,16 @@ function Courses() {
           Fresh: 3,
         };
 
-        return sortOrder === "asc"
-          ? order[getExpiryStatus(a.expiryDate)] -
-              order[getExpiryStatus(b.expiryDate)]
-          : order[getExpiryStatus(b.expiryDate)] -
-              order[getExpiryStatus(a.expiryDate)];
+        const comparison =
+          order[getExpiryStatus(a.expiryDate)] -
+          order[getExpiryStatus(b.expiryDate)];
+
+        return sortOrder === "asc" ? comparison : -comparison;
       }
 
       return 0;
     });
+
   const getExpiryBadge = (expiryDate) => {
     const status = getExpiryStatus(expiryDate);
 
@@ -248,9 +288,10 @@ function Courses() {
         return <span className="badge bg-success ms-2">Fresh</span>;
     }
   };
+
   const handleSort = (field) => {
     if (sortField === field) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+      setSortOrder((current) => (current === "asc" ? "desc" : "asc"));
     } else {
       setSortField(field);
       setSortOrder("asc");
@@ -259,8 +300,9 @@ function Courses() {
 
   return (
     <div className="container-fluid p-2 p-md-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
+      <div className="d-flex justify-content-between align-items-center mb-4 gap-2 flex-wrap">
         <h3 className="fw-bold text-primary mb-0">Food Inventory</h3>
+
         <button
           type="button"
           className="btn btn-outline-primary"
@@ -308,6 +350,7 @@ function Courses() {
                   className="form-control"
                   name="quantity"
                   placeholder="Quantity"
+                  min="0"
                   value={formData.quantity}
                   onChange={handleChange}
                   required
@@ -328,11 +371,20 @@ function Courses() {
               <div className="col-md-2 d-grid">
                 <button
                   type="submit"
-                  style={{ width: "100px" }}
                   className={`btn ${editingId ? "btn-warning" : "btn-success"}`}
                 >
                   {editingId ? "Update" : "Add Food"}
                 </button>
+
+                {editingId && (
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary mt-2"
+                    onClick={resetForm}
+                  >
+                    Cancel Edit
+                  </button>
+                )}
               </div>
             </div>
           </form>
@@ -344,7 +396,7 @@ function Courses() {
           <input
             type="text"
             className="form-control"
-            placeholder="🥕🔍Search food..."
+            placeholder="🥕🔍 Search food..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -374,9 +426,11 @@ function Courses() {
                         : "▼"
                       : "↕"}
                   </th>
+
                   <th>Category</th>
                   <th>Quantity</th>
                   <th>Expiry Date</th>
+
                   <th
                     style={{ cursor: "pointer" }}
                     onClick={() => handleSort("status")}
@@ -388,6 +442,7 @@ function Courses() {
                         : "▼"
                       : "↕"}
                   </th>
+
                   <th className="text-center">Actions</th>
                 </tr>
               </thead>
@@ -398,12 +453,17 @@ function Courses() {
                     <td>{food.name}</td>
                     <td>{food.category}</td>
                     <td>{food.quantity}</td>
-                    <td>{new Date(food.expiryDate).toLocaleDateString()}</td>
+                    <td>
+                      {food.expiryDate &&
+                      !Number.isNaN(new Date(food.expiryDate).getTime())
+                        ? new Date(food.expiryDate).toLocaleDateString()
+                        : "—"}
+                    </td>
 
                     <td>
-                      {food.quantity === 0 ? (
+                      {getStatus(food.quantity) === "Out of Stock" ? (
                         <span className="badge bg-danger">Out of Stock</span>
-                      ) : food.quantity <= 10 ? (
+                      ) : getStatus(food.quantity) === "Low Stock" ? (
                         <span className="badge bg-warning text-dark">
                           Low Stock
                         </span>
@@ -413,18 +473,19 @@ function Courses() {
 
                       {getExpiryBadge(food.expiryDate)}
                     </td>
+
                     <td className="text-center">
                       <button
-                        className="btn btn-sm btn-primary me-2"
-                        style={{ width: "70px" }}
+                        type="button"
+                        className="btn btn-sm btn-primary me-2 mb-1"
                         onClick={() => editFood(food)}
                       >
                         Edit
                       </button>
 
                       <button
-                        className="btn btn-sm btn-danger"
-                        style={{ width: "70px" }}
+                        type="button"
+                        className="btn btn-sm btn-danger mb-1"
                         onClick={() => deleteFood(food._id)}
                       >
                         Delete
@@ -448,4 +509,5 @@ function Courses() {
     </div>
   );
 }
+
 export default Courses;

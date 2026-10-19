@@ -104,6 +104,50 @@ describe("FoodNest frontend behavior", () => {
     expect(window.alert).toHaveBeenCalledWith("Login Successful");
   });
 
+  test("Login uses the configured API base URL instead of the frontend origin", async () => {
+    const user = userEvent.setup();
+    axios.post.mockResolvedValue({
+      data: {
+        message: "Login Successful",
+        token: "abc123",
+        user: {
+          id: "u1",
+          fullname: "Alice Tester",
+          email: "alice@example.com",
+        },
+      },
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/login"]}>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/home" element={<div>Home page</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await user.type(
+      screen.getByPlaceholderText("Enter your email"),
+      "alice@example.com",
+    );
+    await user.type(
+      screen.getByPlaceholderText("Enter password"),
+      "P@ssword123",
+    );
+    await user.click(screen.getByRole("button", { name: /^Login$/i }));
+
+    await waitFor(() => {
+      expect(axios.post).toHaveBeenCalledWith(
+        "http://localhost:4000/api/login",
+        expect.objectContaining({
+          email: "alice@example.com",
+          password: "P@ssword123",
+        }),
+      );
+    });
+  });
+
   test("Login failure shows an error alert", async () => {
     const user = userEvent.setup();
     axios.post.mockRejectedValue({

@@ -5,28 +5,30 @@ import homebg from "../assets/homebg.png";
 
 function Home() {
   const [foods, setFoods] = useState([]);
+
   const API_URL = import.meta.env.VITE_API_URL || "";
 
   const getAuthHeaders = useCallback(() => {
     const token = localStorage.getItem("token");
+
     return token ? { Authorization: `Bearer ${token}` } : {};
   }, []);
 
   const fetchFoods = useCallback(async () => {
-    if (!API_URL) {
-      setFoods([]);
-      return;
-    }
-
     try {
       const res = await axios.get(`${API_URL}/api/items`, {
         headers: getAuthHeaders(),
       });
-      setFoods(res.data);
+
+      setFoods(Array.isArray(res.data) ? res.data : []);
     } catch (error) {
-      console.log(error);
+      console.error(
+        "Failed to fetch food items:",
+        error.response?.data?.message || error.message,
+      );
+      setFoods([]);
     }
-  }, [API_URL, getAuthHeaders]);
+  }, [getAuthHeaders]);
 
   useEffect(() => {
     void fetchFoods();
@@ -41,37 +43,37 @@ function Home() {
 
   const getSafeDate = (value) => {
     if (!value) return null;
+
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? null : date;
   };
+
+  const getDayStart = (date) => {
+    const result = new Date(date);
+    result.setHours(0, 0, 0, 0);
+    return result;
+  };
+
+  const today = getDayStart(new Date());
 
   const expiringSoonItems = foods.filter((food) => {
     const expiry = getSafeDate(food?.expiryDate);
     if (!expiry) return false;
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const expiryDate = new Date(expiry);
-    expiryDate.setHours(0, 0, 0, 0);
-
+    const expiryDate = getDayStart(expiry);
     const diffDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+
     return diffDays >= 0 && diffDays <= 7;
   });
-
-  const expiringSoon = expiringSoonItems.length;
 
   const expiredItems = foods.filter((food) => {
     const expiry = getSafeDate(food?.expiryDate);
     if (!expiry) return false;
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const expiryDate = new Date(expiry);
-    expiryDate.setHours(0, 0, 0, 0);
-
-    return expiryDate < today;
+    return getDayStart(expiry) < today;
   });
 
+  const totalExpiringSoon = expiringSoonItems.length;
   const expiredItemsCount = expiredItems.length;
 
   return (
@@ -88,6 +90,7 @@ function Home() {
             Track your food items, monitor expiry dates, and reduce food waste
             with ease.
           </p>
+
           <Link to="/courses" className="btn btn-success px-4">
             Food Dashboard
           </Link>
@@ -145,7 +148,7 @@ function Home() {
             >
               <div className="card-body text-center">
                 <h6>Expiring Soon</h6>
-                <h3 className="text-warning fw-bold">{expiringSoon}</h3>
+                <h3 className="text-warning fw-bold">{totalExpiringSoon}</h3>
                 <p className="text-muted small mb-0">
                   Items expiring in next 7 days
                 </p>
@@ -173,6 +176,7 @@ function Home() {
               <h6 className="fw-bold text-warning-emphasis mb-3">
                 Expiring Within 7 Days
               </h6>
+
               {expiringSoonItems.length > 0 ? (
                 <ul className="mb-0 ps-3">
                   {expiringSoonItems.map((food) => (
@@ -195,6 +199,7 @@ function Home() {
               <h6 className="fw-bold text-danger-emphasis mb-3">
                 Already Expired
               </h6>
+
               {expiredItems.length > 0 ? (
                 <ul className="mb-0 ps-3">
                   {expiredItems.map((food) => (
